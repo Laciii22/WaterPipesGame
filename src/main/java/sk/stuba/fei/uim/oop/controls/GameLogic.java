@@ -9,12 +9,11 @@ import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 
 public class GameLogic extends UniversalAdapter {
     public static final int INITIAL_SIZE = 8;
-    private JFrame mainGame;
+    private final JFrame mainGame;
     private Board currentBoard;
     @Getter
     private JLabel difficultyLabel;
@@ -57,9 +56,7 @@ public class GameLogic extends UniversalAdapter {
             this.mainGame.setFocusable(true);
             this.mainGame.requestFocus();
         }
-
     }
-
     @Override
     public void keyPressed(KeyEvent e) {
         System.out.println(e);
@@ -77,7 +74,6 @@ public class GameLogic extends UniversalAdapter {
     public void mouseMoved(MouseEvent e) {
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (!(current instanceof Tile)) {
-            // Remove highlight from all tiles
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
                     ((Tile) component).setHighlighted(false);
@@ -85,7 +81,6 @@ public class GameLogic extends UniversalAdapter {
             }
             return;
         } else {
-            // Highlight current tile
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
                     ((Tile) component).setHighlighted(component == current);
@@ -102,6 +97,12 @@ public class GameLogic extends UniversalAdapter {
         } else {
             Tile tile = (Tile) current;
             tile.rotate();
+        }
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getActionCommand().equals("Restart")) {
+            this.gameRestart();
         }
     }
 }

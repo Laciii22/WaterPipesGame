@@ -1,16 +1,12 @@
 package sk.stuba.fei.uim.oop.gui;
 
-import sk.stuba.fei.uim.oop.board.Board;
 import sk.stuba.fei.uim.oop.controls.GameLogic;
-import sk.stuba.fei.uim.oop.tile.Tile;
 
 import javax.swing.*;
 import java.awt.*;
 
     public class WaterPipesGame {
 
-        private JPanel board;
-        private Board gameBoard;
 
         public WaterPipesGame() {
             JFrame frame = new JFrame("Water Pipes");
@@ -41,13 +37,14 @@ import java.awt.*;
             JLabel difficultyLabel = new JLabel("Difficulty");
             difficultyLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
-            JButton restartButton = new JButton("Restart");
-            JButton checkButton = new JButton("Check");
+            JButton buttonRestart = new JButton("Restart");
+            buttonRestart.addActionListener(logic);
+            JButton buttonCheck = new JButton("Check");
 
             header.add(difficultyLabel);
             header.add(slider);
-            header.add(restartButton);
-            header.add(checkButton);
+            header.add(buttonRestart);
+            header.add(buttonCheck);
 
             frame.add(header, BorderLayout.NORTH);
 

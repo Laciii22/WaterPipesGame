@@ -2,13 +2,13 @@ package sk.stuba.fei.uim.oop.board;
 
 import lombok.Getter;
 import lombok.Setter;
-import sk.stuba.fei.uim.oop.controls.GameLogic;
 import sk.stuba.fei.uim.oop.tile.Tile;
 import sk.stuba.fei.uim.oop.tile.TileType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 
 public class Board extends JPanel {
@@ -16,8 +16,8 @@ public class Board extends JPanel {
     @Getter
     @Setter
     private Tile[][] tiles;
-
     private int size;
+    private final List<Point> pipes = new ArrayList<>();
 
 
     public Board(int dimension) {
@@ -41,18 +41,50 @@ public class Board extends JPanel {
     }
 
 
-    private void updateBoard() {
-        for (int row = 0; row < this.size; row++) {
-            for (int col = 0; col < this.size; col++) {
-                this.tiles[row][col].repaint();
-            }
-        }
-    }
     public void generateMaze() {
         boolean[] visited = new boolean[this.size * this.size];
         int start = (int) (Math.random() * this.size);
         this.dfs(start, 0, visited);
+        setPipes();
     }
+
+    private void setPipes() {
+        for (int i = 0; i < pipes.size(); i++) {
+            Point p = pipes.get(i);
+            int row = p.x;
+            int col = p.y;
+            Tile tile = tiles[row][col];
+            if (i == 0) {
+                Point nextPipe = i < pipes.size() - 1 ? pipes.get(i + 1) : null;
+                if (nextPipe != null && nextPipe.x == row) {
+                    tile.setType(TileType.STRAIGHT_PIPE);
+                } else {
+                    tile.setType(TileType.KNEE_PIPE);
+                }
+            } else {
+                Point prevPipe = pipes.get(i - 1);
+                Point nextPipe = i < pipes.size() - 1 ? pipes.get(i + 1) : null;
+
+                boolean isPrevInSameRow = prevPipe.x == row;
+                boolean isPrevInSameCol = prevPipe.y == col;
+                boolean isNextInSameRow = nextPipe != null && nextPipe.x == row;
+                boolean isNextInSameCol = nextPipe != null && nextPipe.y == col;
+
+                if (isPrevInSameRow && isNextInSameRow) {
+                    tile.setType(TileType.STRAIGHT_PIPE);
+                } else if (isPrevInSameCol && isNextInSameCol) {
+                    tile.setType(TileType.STRAIGHT_PIPE);
+                } else {
+                    tile.setType(TileType.KNEE_PIPE);
+                }
+            }
+        }
+    }
+
+
+
+
+
 
     public void dfs(int row, int col, boolean[] visited) {
         visited[row * size + col] = true;
@@ -71,24 +103,13 @@ public class Board extends JPanel {
             int next = neighbors.get(0);
             int nextRow = next / size;
             int nextCol = next % size;
-            if (nextRow == row) {
-                if (nextCol == col + 1) {
-                    tiles[row][col].setType(TileType.STRAIGHT_PIPE);
-                    tiles[row][col + 1].setType(TileType.STRAIGHT_PIPE);
-                }
-            } else if (nextRow == row + 1) {
-                tiles[row][col].setType(TileType.KNEE_PIPE);
-                tiles[row + 1][col].setType(TileType.KNEE_PIPE);
-            } else if (nextRow == row - 1) {
-                tiles[row][col].setType(TileType.KNEE_PIPE);
-                tiles[row - 1][col].setType(TileType.KNEE_PIPE);
-            }
+            pipes.add(new Point(row, col));
             dfs(nextRow, nextCol, visited);
         }
     }
-
-
 }
+
+
 
 
 

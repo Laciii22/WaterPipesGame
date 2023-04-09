@@ -42,6 +42,10 @@ public class Tile extends JPanel {
             g.fillRect(0, getHeight()/3 -getHeight()/10, getWidth()/8, getHeight()/3+getHeight()/5);
             g.fillRect(getWidth()/3-getWidth()/10, 0, getWidth()/3+getWidth()/5, getHeight()/8);
         }
+        else if (type.equals(TileType.TEST)) {
+            g.setColor(Color.RED);
+            g.fillRect(0,0, getWidth(), getHeight());
+        }
 
         if (highlighted) {
             g2d.setColor(Color.YELLOW);
