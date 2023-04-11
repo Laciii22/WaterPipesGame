@@ -25,6 +25,7 @@ import java.awt.*;
             header.setBackground(Color.LIGHT_GRAY);
 
             JSlider slider = new JSlider(8, 16, 8);
+            slider.setFocusable(false);
             slider.setBackground(Color.LIGHT_GRAY);
             slider.setPaintTicks(true);
             slider.setMajorTickSpacing(4);
@@ -32,14 +33,15 @@ import java.awt.*;
             slider.setSnapToTicks(true);
             slider.addChangeListener(logic);
 
-
-
             JLabel difficultyLabel = new JLabel("Difficulty");
             difficultyLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
             JButton buttonRestart = new JButton("Restart");
+            buttonRestart.setFocusable(false);
             buttonRestart.addActionListener(logic);
             JButton buttonCheck = new JButton("Check");
+            buttonCheck.setFocusable(false);
+            buttonCheck.addActionListener(logic);
 
             header.add(difficultyLabel);
             header.add(slider);

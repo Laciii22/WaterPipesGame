@@ -17,6 +17,8 @@ public class Board extends JPanel {
     @Setter
     private Tile[][] tiles;
     private int size;
+
+    @Getter
     private final List<Point> pipes = new ArrayList<>();
 
 
@@ -30,10 +32,10 @@ public class Board extends JPanel {
         this.tiles = new Tile[dimension][dimension];
         this.setLayout(new GridLayout(dimension, dimension));
         this.size = dimension;
-        int tileSize = 50; // set the tile size here
+        int tileSize = 50;
         for (int row = 0; row < dimension; row++) {
             for (int col = 0; col < dimension; col++) {
-                this.tiles[row][col] = new Tile(tileSize); // pass the tile size to the Tile constructor
+                this.tiles[row][col] = new Tile(tileSize);
                 this.add(tiles[row][col]);
             }
         }
@@ -54,38 +56,77 @@ public class Board extends JPanel {
             int row = p.x;
             int col = p.y;
             Tile tile = tiles[row][col];
+            Point prevPipe = i > 0 ? pipes.get(i - 1) : null;
+            Point nextPipe = i < pipes.size() - 1 ? pipes.get(i + 1) : null;
+            boolean isPrevInSameRow = prevPipe != null && prevPipe.x == row;
+            boolean isPrevInSameCol = prevPipe != null && prevPipe.y == col;
+            boolean isNextInSameRow = nextPipe != null && nextPipe.x == row;
+            boolean isNextInSameCol = nextPipe != null && nextPipe.y == col;
             if (i == 0) {
-                Point nextPipe = i < pipes.size() - 1 ? pipes.get(i + 1) : null;
                 if (nextPipe != null && nextPipe.x == row) {
                     tile.setType(TileType.STRAIGHT_PIPE);
+                    tile.setRotation(0);
+                    tile.setRotationSolution(0);
                 } else {
-                    tile.setType(TileType.KNEE_PIPE);
+                    if (nextPipe != null && nextPipe.x <  row) {
+                        tile.setType(TileType.KNEE_PIPE);
+                        tile.setRotation(0);
+                        tile.setRotationSolution(0);
+                    }
+                    else {
+                        tile.setType(TileType.KNEE_PIPE);
+                        tile.setRotation(3);
+                        tile.setRotationSolution(3);
+                    }
                 }
+                tile.setClickable(false);
             } else {
-                Point prevPipe = pipes.get(i - 1);
-                Point nextPipe = i < pipes.size() - 1 ? pipes.get(i + 1) : null;
-
-                boolean isPrevInSameRow = prevPipe.x == row;
-                boolean isPrevInSameCol = prevPipe.y == col;
-                boolean isNextInSameRow = nextPipe != null && nextPipe.x == row;
-                boolean isNextInSameCol = nextPipe != null && nextPipe.y == col;
-
-                if (isPrevInSameRow && isNextInSameRow) {
+                if ((isPrevInSameRow && isNextInSameRow)) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                } else if (isPrevInSameCol && isNextInSameCol) {
+                    tile.setRotationSolution(0);
+                }
+                else if (isPrevInSameCol && isNextInSameCol){
                     tile.setType(TileType.STRAIGHT_PIPE);
+                    tile.setRotationSolution(1);
                 } else {
-                    tile.setType(TileType.KNEE_PIPE);
+                    if (isPrevInSameRow && isNextInSameCol && prevPipe.y < col && nextPipe.x < row) {
+                        tile.setType(TileType.KNEE_PIPE);
+                        tile.setRotationSolution(0);
+                        System.out.println("vlavo hore" + row + col);
+                    } else if (isPrevInSameRow && isNextInSameCol) {
+                        tile.setType(TileType.KNEE_PIPE);
+                        System.out.println("Vlavo dole" + row + col);
+                        tile.setRotationSolution(3);
+                    } else if (isPrevInSameCol && isNextInSameRow && prevPipe.x > row) {
+                        tile.setType(TileType.KNEE_PIPE);
+                        System.out.println("Vpravo hore" + row + col);
+                        tile.setRotationSolution(2);
+                    } else if (isPrevInSameCol && isNextInSameRow) {
+                        System.out.println("vpravo dole" + row + col);
+                        tile.setType(TileType.KNEE_PIPE);
+                        tile.setRotationSolution(1);
+                    } else {
+                        if (isPrevInSameRow) {
+                            tile.setType(TileType.STRAIGHT_PIPE);
+                            tile.setRotationSolution(1);
+                            tile.setRotation(1);
+                        } else {
+                            tile.setType(TileType.KNEE_PIPE);
+                            if (prevPipe != null && prevPipe.x < row) {
+                                tile.setRotation(1);
+                                tile.setRotationSolution(1);
+                            }
+                            else {
+                                tile.setRotation(2);
+                                tile.setRotationSolution(2);
+                            }
+                        }
+                        tile.setClickable(false);
+                    }
                 }
             }
         }
     }
-
-
-
-
-
-
     public void dfs(int row, int col, boolean[] visited) {
         visited[row * size + col] = true;
         ArrayList<Integer> neighbors = new ArrayList<>();
@@ -107,6 +148,7 @@ public class Board extends JPanel {
             dfs(nextRow, nextCol, visited);
         }
     }
+
 }
 
 
