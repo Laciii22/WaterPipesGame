@@ -1,28 +1,21 @@
 package sk.stuba.fei.uim.oop.board;
-
 import lombok.Getter;
-import lombok.Setter;
 import sk.stuba.fei.uim.oop.tile.Tile;
 import sk.stuba.fei.uim.oop.tile.TileType;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
-
-
 public class Board extends JPanel {
-
     @Getter
-    @Setter
     private Tile[][] tiles;
-    private int size;
-
     @Getter
-    private final List<Point> pipes = new ArrayList<>();
-
+    private final Random random;
+    private int size;
+    @Getter
+    private final Stack<Point> pipes = new Stack<>();
 
     public Board(int dimension) {
+        random = new Random();
         this.initializeBoard(dimension);
         setPreferredSize(new Dimension());
         setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
@@ -41,13 +34,56 @@ public class Board extends JPanel {
         }
         generateMaze();
     }
-
-
-    public void generateMaze() {
-        boolean[] visited = new boolean[this.size * this.size];
-        int start = (int) (Math.random() * this.size);
-        this.dfs(start, 0, visited);
+    private void generateMaze() {
+        boolean[][] visited = new boolean[this.size][this.size];
+        Stack<Point> stack = new Stack<>();
+        int startRow = this.getRandom().nextInt(this.size);
+        stack.push(new Point(startRow, 0));
+        visited[startRow][0] = true;
+        randomizedDfs(stack, visited);
+        pipes.addAll(stack);
         setPipes();
+    }
+
+    private void randomizedDfs(Stack<Point> stack, boolean[][] visited) {
+        int lastRow = this.getRandom().nextInt(this.size);
+        while (true) {
+            Point p = stack.peek();
+            int row = p.x;
+            int col = p.y;
+            ArrayList<Point> neighbors = new ArrayList<>();
+            if (row > 0 && !visited[row - 1][col]) {
+                neighbors.add(new Point(row - 1, col));
+            }
+            if (row < size - 1 && !visited[row + 1][col]) {
+                neighbors.add(new Point(row + 1, col));
+            }
+            if (col < size - 1 && !visited[row][col + 1]) {
+                neighbors.add(new Point(row, col + 1));
+            }
+            if (col > 0 && !visited[row][col - 1]) {
+                neighbors.add(new Point(row, col - 1));
+            }
+
+            if (!neighbors.isEmpty()) {
+                Collections.shuffle(neighbors);
+                Point neighbor = neighbors.get(0);
+                int neighborRow = neighbor.x;
+                int neighborCol = neighbor.y;
+                visited[neighborRow][neighborCol] = true;
+                stack.push(neighbor);
+                if (neighborCol == this.size - 1 && neighborRow == lastRow) {
+                    break;
+                }
+            } else {
+                stack.pop();
+                if (stack.isEmpty()) {
+                    int newStartRow = this.getRandom().nextInt(this.size);
+                    stack.push(new Point(newStartRow, 0));
+                    visited[newStartRow][0] = true;
+                }
+            }
+        }
     }
 
     private void setPipes() {
@@ -65,90 +101,64 @@ public class Board extends JPanel {
             if (i == 0) {
                 if (nextPipe != null && nextPipe.x == row) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                    tile.setRotation(0);
-                    tile.setRotationSolution(0);
+                    tile.setRotation(2);
                 } else {
-                    if (nextPipe != null && nextPipe.x <  row) {
+                    if (nextPipe != null && nextPipe.x < row) {
                         tile.setType(TileType.KNEE_PIPE);
                         tile.setRotation(0);
-                        tile.setRotationSolution(0);
-                    }
-                    else {
+                    } else {
                         tile.setType(TileType.KNEE_PIPE);
                         tile.setRotation(3);
-                        tile.setRotationSolution(3);
                     }
                 }
+                tile.setBorder(BorderFactory.createLineBorder(Color.GREEN, 6));
                 tile.setClickable(false);
-            } else {
-                if ((isPrevInSameRow && isNextInSameRow)) {
+            } else if (i < pipes.size() - 1) {
+                if (isPrevInSameRow && isNextInSameRow) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                    tile.setRotationSolution(0);
-                }
-                else if (isPrevInSameCol && isNextInSameCol){
+                } else if (isPrevInSameCol && isNextInSameCol) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                    tile.setRotationSolution(1);
                 } else {
-                    if (isPrevInSameRow && isNextInSameCol && prevPipe.y < col && nextPipe.x < row) {
+                    tile.setType(TileType.KNEE_PIPE);
+                }
+                tile.setClickable(true);
+            } else {
+                tile.setClickable(false);
+                tile.setBorder(BorderFactory.createLineBorder(Color.RED, 6));
+                if (prevPipe != null && prevPipe.x == row) {
+                    tile.setType(TileType.STRAIGHT_PIPE);
+                    tile.setRotation(2);
+                } else {
+                    if (prevPipe != null && prevPipe.x < row) {
                         tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotationSolution(0);
-                        System.out.println("vlavo hore" + row + col);
-                    } else if (isPrevInSameRow && isNextInSameCol) {
-                        tile.setType(TileType.KNEE_PIPE);
-                        System.out.println("Vlavo dole" + row + col);
-                        tile.setRotationSolution(3);
-                    } else if (isPrevInSameCol && isNextInSameRow && prevPipe.x > row) {
-                        tile.setType(TileType.KNEE_PIPE);
-                        System.out.println("Vpravo hore" + row + col);
-                        tile.setRotationSolution(2);
-                    } else if (isPrevInSameCol && isNextInSameRow) {
-                        System.out.println("vpravo dole" + row + col);
-                        tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotationSolution(1);
+                        tile.setRotation(1);
                     } else {
-                        if (isPrevInSameRow) {
-                            tile.setType(TileType.STRAIGHT_PIPE);
-                            tile.setRotationSolution(1);
-                            tile.setRotation(1);
-                        } else {
-                            tile.setType(TileType.KNEE_PIPE);
-                            if (prevPipe != null && prevPipe.x < row) {
-                                tile.setRotation(1);
-                                tile.setRotationSolution(1);
-                            }
-                            else {
-                                tile.setRotation(2);
-                                tile.setRotationSolution(2);
-                            }
-                        }
-                        tile.setClickable(false);
+                        tile.setType(TileType.KNEE_PIPE);
+                        tile.setRotation(2);
                     }
                 }
             }
         }
     }
-    public void dfs(int row, int col, boolean[] visited) {
-        visited[row * size + col] = true;
-        ArrayList<Integer> neighbors = new ArrayList<>();
-        if (row > 0 && !visited[(row - 1) * size + col]) {
-            neighbors.add((row - 1) * size + col);
-        }
-        if (row < size - 1 && !visited[(row + 1) * size + col]) {
-            neighbors.add((row + 1) * size + col);
-        }
-        if (col < size - 1 && !visited[row * size + col + 1]) {
-            neighbors.add(row * size + col + 1);
-        }
-        if (!neighbors.isEmpty()) {
-            Collections.shuffle(neighbors);
-            int next = neighbors.get(0);
-            int nextRow = next / size;
-            int nextCol = next % size;
-            pipes.add(new Point(row, col));
-            dfs(nextRow, nextCol, visited);
-        }
-    }
 
+    public ArrayList<Point> getNeighbors(Point point) {
+        int x = point.x;
+        int y = point.y;
+        ArrayList<Point> neighbors = new ArrayList<>();
+        if (x > 0 && tiles[x - 1][y].getType() != TileType.EMPTY) {
+            neighbors.add(new Point(x - 1, y));
+        }
+        if (x < size - 1 && tiles[x + 1][y].getType() != TileType.EMPTY) {
+            neighbors.add(new Point(x + 1, y));
+        }
+        if (y > 0 && tiles[x][y - 1].getType() != TileType.EMPTY) {
+            neighbors.add(new Point(x, y - 1));
+        }
+        if (y < size - 1 && tiles[x][y + 1].getType() != TileType.EMPTY) {
+            neighbors.add(new Point(x, y + 1));
+        }
+        return neighbors;
+    }
 }
 
 

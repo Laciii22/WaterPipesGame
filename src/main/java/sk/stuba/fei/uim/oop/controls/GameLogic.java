@@ -1,6 +1,7 @@
 package sk.stuba.fei.uim.oop.controls;
 
 import lombok.Getter;
+import lombok.Setter;
 import sk.stuba.fei.uim.oop.board.Board;
 import sk.stuba.fei.uim.oop.tile.Tile;
 import sk.stuba.fei.uim.oop.tile.TileType;
@@ -11,13 +12,16 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.*;
 
 public class GameLogic extends UniversalAdapter {
     public static final int INITIAL_SIZE = 8;
     private final JFrame mainGame;
     private Board currentBoard;
+    @Getter @Setter
+    private int level = 1;
     @Getter
-    private JLabel difficultyLabel;
+    private JLabel labelLevel;
     private int currentBoardSize;
 
     public GameLogic(JFrame mainGame) {
@@ -25,8 +29,14 @@ public class GameLogic extends UniversalAdapter {
         this.currentBoardSize = INITIAL_SIZE;
         this.initializeNewBoard(this.currentBoardSize);
         this.mainGame.add(this.currentBoard);
-        this.difficultyLabel = new JLabel();
-        this.updateDifficultyLabel();
+        this.labelLevel = new JLabel();
+        this.updateLevelLabel();
+    }
+
+    private void updateLevelLabel() {
+        this.labelLevel.setText(" Level: " + this.getLevel() + " Board size: " + this.currentBoardSize);
+        this.mainGame.revalidate();
+        this.mainGame.repaint();
     }
 
     private void initializeNewBoard(int dimension) {
@@ -35,37 +45,29 @@ public class GameLogic extends UniversalAdapter {
         this.currentBoard.addMouseListener(this);
     }
 
-    private void updateDifficultyLabel() {
-        this.difficultyLabel.setText("Difficulty: " + this.currentBoardSize);
-        this.mainGame.revalidate();
-        this.mainGame.repaint();
-    }
-
     private void gameRestart() {
         this.mainGame.remove(this.currentBoard);
         this.initializeNewBoard(this.currentBoardSize);
         this.mainGame.add(this.currentBoard);
-        this.updateDifficultyLabel();
         this.mainGame.revalidate();
-        this.mainGame.repaint();
     }
 
     @Override
     public void stateChanged(ChangeEvent e) {
         if (this.currentBoardSize != ((JSlider) e.getSource()).getValue()) {
             this.currentBoardSize = ((JSlider) e.getSource()).getValue();
+            this.setLevel(1);
+            this.updateLevelLabel();
             this.gameRestart();
-            this.mainGame.setFocusable(true);
-            this.mainGame.requestFocus();
         }
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println(e);
         switch (e.getKeyCode()) {
             case KeyEvent.VK_R:
-                System.out.println("Restarting game");
+                this.setLevel(1);
+                this.updateLevelLabel();
                 this.gameRestart();
                 break;
             case KeyEvent.VK_ESCAPE:
@@ -79,62 +81,124 @@ public class GameLogic extends UniversalAdapter {
     @Override
     public void mouseMoved(MouseEvent e) {
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
+        currentBoard.repaint();
         if (!(current instanceof Tile)) {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
-                    ((Tile) component).setHighlighted(false);
+                    ((Tile) component).setHighlighted(0);
                 }
             }
-            return;
         } else {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
                     Tile tile = (Tile) component;
-                    tile.setHighlighted(component == current && tile.isClickable());
+                    tile.setHighlighted(component == current ? 2 : 0);
                 }
             }
         }
-        this.currentBoard.repaint();
     }
-
 
     @Override
     public void mouseClicked(MouseEvent e) {
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
-        if (!(current instanceof Tile)) {
-            return;
-        } else if (((Tile) current).isClickable()) {
+        if (current instanceof Tile) {
             Tile tile = (Tile) current;
-            tile.rotate();
+            if (tile.isClickable()) {
+                tile.rotate();
+            }
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Restart")) {
+            this.setLevel(1);
+            this.updateLevelLabel();
             this.gameRestart();
         } else if (e.getActionCommand().equals("Check")) {
-            System.out.println("Checking");
-            checkForWin();
+            this.checkForWin();
         }
     }
 
-    private void checkForWin() {
-        for (Point pipe : currentBoard.getPipes()){
-            int x = (int) pipe.getX();
-            int y = (int) pipe.getY();
-            Tile[][] tile = currentBoard.getTiles();
-            if (tile[x][y].getTileType().equals(TileType.STRAIGHT_PIPE)){
-                if (tile[x][y].getRotation() % 2 == tile[x][y].getRotationSolution()){
-                    tile[x][y].setHighlighted(true);
-                }
-            }
-            else if (tile[x][y].getRotation() == tile[x][y].getRotationSolution()){
-                    tile[x][y].setHighlighted(true);
-            } else {
-                return;
+    public void checkForWin() {
+        Set<Point> visited = new HashSet<>();
+        Point firstPipe = currentBoard.getPipes().get(0);
+        checkForWinRec(firstPipe, visited);
+        Point lastPipe = currentBoard.getPipes().get(currentBoard.getPipes().size() - 1);
+        Tile lastPipeTile = currentBoard.getTiles()[lastPipe.x][lastPipe.y];
+        if (lastPipeTile.getHighlighted()==1) {
+            gameRestart();
+            addLevel();
+        }
+        currentBoard.repaint();
+    }
+
+    private boolean checkForWinRec(Point current, Set<Point> visited) {
+        visited.add(current);
+        Tile currentTile = currentBoard.getTiles()[current.x][current.y];
+        currentTile.setHighlighted(1);
+        if (current ==  currentBoard.getPipes().get(currentBoard.getPipes().size() - 1)) {
+            return true;
+        }
+        ArrayList<Point> neighbors = currentBoard.getNeighbors(current);
+        boolean solved = false;
+
+        for (Point neighbor : neighbors) {
+            Tile neighborTile = currentBoard.getTiles()[neighbor.x][neighbor.y];
+            currentTile = currentBoard.getTiles()[current.x][current.y];
+            if (!visited.contains(neighbor) && isCorrectlyRotated(currentTile, neighborTile, current, neighbor)) {
+                solved = checkForWinRec(neighbor, visited) || solved;
             }
         }
+        return solved;
 
+    }
+
+    private boolean isCorrectlyRotated(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
+        int prevRotation = prevTile.getRotation();
+        int currentRotation = currentTile.getRotation();
+
+        if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
+            if (prevPoint.x == currentPoint.x) {
+                return (prevRotation == 0 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 2);
+            } else if (prevPoint.y == currentPoint.y) {
+                return (prevRotation == 1 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 3);
+            }
+        } else if (prevTile.getType() == TileType.KNEE_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
+            if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
+                return (prevRotation == 1 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 2);
+            } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
+                return (prevRotation == 0 || prevRotation == 3) && (currentRotation == 0 || currentRotation == 2);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
+                return (prevRotation == 2 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 3);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
+                return (prevRotation == 0 || prevRotation == 1) && (currentRotation == 1 || currentRotation == 3);
+            }
+        } else if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.KNEE_PIPE) {
+            if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
+                return (currentRotation == 1 || currentRotation == 2) && (prevRotation == 0 || prevRotation == 2);
+            } else if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
+                return (currentRotation == 0 || currentRotation == 3) && (prevRotation == 0 || prevRotation == 2);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
+                return (currentRotation == 2 || currentRotation == 3) && (prevRotation == 1 || prevRotation == 3);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
+                return (currentRotation == 0 || currentRotation == 1) && (prevRotation == 1 || prevRotation == 3);
+            }
+        } else {
+            if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
+                return (prevRotation == 1 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 3);
+            } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
+                return (prevRotation == 0 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 2);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
+                return (prevRotation == 2 || prevRotation == 3) && (currentRotation == 0 || currentRotation == 1);
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
+                return (prevRotation == 0 || prevRotation == 1) && (currentRotation == 2 || currentRotation == 3);
+            }
+        }
+        return false;
+    }
+    private void addLevel() {
+        this.setLevel(this.getLevel() + 1);
+        this.updateLevelLabel();
     }
 }
