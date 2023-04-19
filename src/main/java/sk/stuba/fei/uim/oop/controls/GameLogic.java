@@ -88,6 +88,7 @@ public class GameLogic extends UniversalAdapter {
                     ((Tile) component).setHighlighted(0);
                 }
             }
+            return;
         } else {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
@@ -99,7 +100,7 @@ public class GameLogic extends UniversalAdapter {
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (current instanceof Tile) {
             Tile tile = (Tile) current;

@@ -57,9 +57,13 @@ public class Tile extends JPanel {
     }
 
     public void rotate() {
-        setRotation((getRotation() + 1) % 4);
-        repaint();
+        if (type == TileType.STRAIGHT_PIPE) {
+            setRotation((getRotation() + 1) % 2);
+        } else if (type == TileType.KNEE_PIPE) {
+            setRotation((getRotation() + 1) % 4);
+        }
     }
+
     private void drawKneePipe(Graphics g, Color color){
         g.setColor(color);
         g.fillRect(0, getHeight() / 3, getWidth() / 2, getHeight() / 3);
