@@ -16,10 +16,13 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class GameLogic extends UniversalAdapter {
-    public static final int INITIAL_SIZE = 8;
+    private static final int INITIAL_SIZE = 8;
+    private static final String RESTART = "Restart";
+    private static final String CHECK = "Check";
     private final JFrame mainGame;
     private Board currentBoard;
-    @Getter @Setter
+    @Getter
+    @Setter
     private int level = 1;
     @Getter
     private JLabel labelLevel;
@@ -73,6 +76,7 @@ public class GameLogic extends UniversalAdapter {
                 break;
             case KeyEvent.VK_ESCAPE:
                 this.mainGame.dispose();
+                System.exit(0);
                 break;
             case KeyEvent.VK_ENTER:
                 checkForWin();
@@ -99,8 +103,18 @@ public class GameLogic extends UniversalAdapter {
         }
     }
 
+    private void setDefaultHighlighting() {
+        for (Component component : currentBoard.getComponents()) {
+            if (component instanceof Tile) {
+                Tile tile = (Tile) component;
+                tile.setHighlighted(0);
+            }
+        }
+    }
+
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
+        this.setDefaultHighlighting();
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (current instanceof Tile) {
             Tile tile = (Tile) current;
@@ -112,11 +126,11 @@ public class GameLogic extends UniversalAdapter {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Restart")) {
+        if (e.getActionCommand().equals(RESTART)) {
             this.setLevel(1);
             this.updateLevelLabel();
             this.gameRestart();
-        } else if (e.getActionCommand().equals("Check")) {
+        } else if (e.getActionCommand().equals(CHECK)) {
             this.checkForWin();
         }
     }
@@ -127,7 +141,7 @@ public class GameLogic extends UniversalAdapter {
         checkForWinRec(firstPipe, visited);
         Point lastPipe = currentBoard.getPipes().get(currentBoard.getPipes().size() - 1);
         Tile lastPipeTile = currentBoard.getTiles()[lastPipe.x][lastPipe.y];
-        if (lastPipeTile.getHighlighted()==1) {
+        if (lastPipeTile.getHighlighted() == 1) {
             gameRestart();
             addLevel();
         }
@@ -138,7 +152,7 @@ public class GameLogic extends UniversalAdapter {
         visited.add(current);
         Tile currentTile = currentBoard.getTiles()[current.x][current.y];
         currentTile.setHighlighted(1);
-        if (current ==  currentBoard.getPipes().get(currentBoard.getPipes().size() - 1)) {
+        if (current == currentBoard.getPipes().get(currentBoard.getPipes().size() - 1)) {
             return true;
         }
         ArrayList<Point> neighbors = currentBoard.getNeighbors(current);
@@ -154,78 +168,82 @@ public class GameLogic extends UniversalAdapter {
         return solved;
     }
 
+
     private boolean isCorrectlyRotated(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
-        int prevRotation = prevTile.getRotation();
-        int currentRotation = currentTile.getRotation();
         if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
-            if (prevPoint.x == currentPoint.x) {
-                return (prevRotation == PipeRotation.HORIZONTAL.getRotation()) &&
-                        (currentRotation == PipeRotation.HORIZONTAL.getRotation());
-            } else if (prevPoint.y == currentPoint.y) {
-                return (prevRotation == PipeRotation.VERTICAL.getRotation()) &&
-                        (currentRotation == PipeRotation.VERTICAL.getRotation());
-            }
+            return straightPipesConnection(prevTile, currentTile, prevPoint, currentPoint);
         } else if (prevTile.getType() == TileType.KNEE_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
-            if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
-                        || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
-            } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
-                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
-                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
-                        || prevRotation == PipeRotation.RIGHT_UP.getRotation())
-                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
-            }
+            return kneeStraightPipeConnection(prevTile, currentTile, prevPoint, currentPoint);
         } else if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.KNEE_PIPE) {
-            if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (prevRotation == PipeRotation.HORIZONTAL.getRotation())
-                        && (currentRotation == PipeRotation.RIGHT_UP.getRotation()
-                        || currentRotation == PipeRotation.RIGHT_DOWN.getRotation());
-            } else if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (prevRotation == PipeRotation.HORIZONTAL.getRotation())
-                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
-                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (prevRotation == PipeRotation.VERTICAL.getRotation())
-                        && (currentRotation == PipeRotation.RIGHT_DOWN.getRotation()
-                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (prevRotation == PipeRotation.VERTICAL.getRotation())
-                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
-                        || currentRotation == PipeRotation.RIGHT_UP.getRotation());
-            }
-        } else {
-            if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
-                        || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
-                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
-            } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
-                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.RIGHT_UP.getRotation()
-                        || currentRotation == PipeRotation.RIGHT_DOWN.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
-                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
-                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
-                        || currentRotation == PipeRotation.RIGHT_UP.getRotation());
-            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
-                        || prevRotation == PipeRotation.RIGHT_UP.getRotation())
-                        && (currentRotation == PipeRotation.RIGHT_DOWN.getRotation()
-                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
-            }
+            return kneeStraightPipeConnection(currentTile, prevTile, currentPoint, prevPoint);
+        } else if (prevTile.getType() == TileType.KNEE_PIPE && currentTile.getType() == TileType.KNEE_PIPE) {
+            return kneePipesConnection(prevTile, currentTile, prevPoint, currentPoint);
         }
         return false;
     }
+
+    private boolean straightPipesConnection(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
+        int prevRotation = prevTile.getRotation();
+        int currentRotation = currentTile.getRotation();
+        if (prevPoint.x == currentPoint.x) {
+            return (prevRotation == PipeRotation.HORIZONTAL.getRotation() && currentRotation == PipeRotation.HORIZONTAL.getRotation());
+        } else if (prevPoint.y == currentPoint.y) {
+            return (prevRotation == PipeRotation.VERTICAL.getRotation() && currentRotation == PipeRotation.VERTICAL.getRotation());
+        }
+        return false;
+    }
+
+
+    private boolean kneeStraightPipeConnection(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
+        int prevRotation = prevTile.getRotation();
+        int currentRotation = currentTile.getRotation();
+            if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
+                return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
+            } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
+                return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
+            } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_UP.getRotation())
+                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
+            }
+        return false;
+    }
+
+    private boolean kneePipesConnection(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
+        int prevRotation = prevTile.getRotation();
+        int currentRotation = currentTile.getRotation();
+        if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
+            return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
+                    || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
+                    && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                    || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
+        } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
+            return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                    || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                    && (currentRotation == PipeRotation.RIGHT_UP.getRotation()
+                    || currentRotation == PipeRotation.RIGHT_DOWN.getRotation());
+        } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
+            return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                    || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                    && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                    || currentRotation == PipeRotation.RIGHT_UP.getRotation());
+        } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
+            return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                    || prevRotation == PipeRotation.RIGHT_UP.getRotation())
+                    && (currentRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                    || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
+        }
+        return false;
+    }
+
 
     private void addLevel() {
         this.setLevel(this.getLevel() + 1);
