@@ -28,6 +28,9 @@ public class Tile extends JPanel {
     }
     @Override
     protected void paintComponent(Graphics g) {
+        if (type.equals(TileType.STRAIGHT_PIPE)){
+            this.setRotation(this.getRotation() % 2);
+        }
         super.paintComponent(g);
         this.setBackground(null);
         Color color = Color.black;
@@ -57,11 +60,7 @@ public class Tile extends JPanel {
     }
 
     public void rotate() {
-        if (type == TileType.STRAIGHT_PIPE) {
-            setRotation((getRotation() + 1) % 2);
-        } else if (type == TileType.KNEE_PIPE) {
-            setRotation((getRotation() + 1) % 4);
-        }
+        setRotation((getRotation() + 1) % 4);
     }
 
     private void drawKneePipe(Graphics g, Color color){

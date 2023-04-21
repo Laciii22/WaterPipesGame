@@ -1,5 +1,6 @@
 package sk.stuba.fei.uim.oop.board;
 import lombok.Getter;
+import sk.stuba.fei.uim.oop.tile.PipeRotation;
 import sk.stuba.fei.uim.oop.tile.Tile;
 import sk.stuba.fei.uim.oop.tile.TileType;
 import javax.swing.*;
@@ -101,14 +102,14 @@ public class Board extends JPanel {
             if (i == 0) {
                 if (nextPipe != null && nextPipe.x == row) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                    tile.setRotation(2);
+                    tile.setRotation(PipeRotation.HORIZONTAL.getRotation());
                 } else {
                     if (nextPipe != null && nextPipe.x < row) {
                         tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotation(0);
+                        tile.setRotation(PipeRotation.LEFT_UP.getRotation());
                     } else {
                         tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotation(3);
+                        tile.setRotation(PipeRotation.LEFT_DOWN.getRotation());
                     }
                 }
                 tile.setBorder(BorderFactory.createLineBorder(Color.GREEN, 6));
@@ -127,14 +128,14 @@ public class Board extends JPanel {
                 tile.setBorder(BorderFactory.createLineBorder(Color.RED, 6));
                 if (prevPipe != null && prevPipe.x == row) {
                     tile.setType(TileType.STRAIGHT_PIPE);
-                    tile.setRotation(2);
+                    tile.setRotation(PipeRotation.HORIZONTAL.getRotation());
                 } else {
                     if (prevPipe != null && prevPipe.x < row) {
                         tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotation(1);
+                        tile.setRotation(PipeRotation.RIGHT_UP.getRotation());
                     } else {
                         tile.setType(TileType.KNEE_PIPE);
-                        tile.setRotation(2);
+                        tile.setRotation(PipeRotation.RIGHT_DOWN.getRotation());
                     }
                 }
             }

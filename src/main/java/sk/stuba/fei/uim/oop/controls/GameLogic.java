@@ -3,6 +3,7 @@ package sk.stuba.fei.uim.oop.controls;
 import lombok.Getter;
 import lombok.Setter;
 import sk.stuba.fei.uim.oop.board.Board;
+import sk.stuba.fei.uim.oop.tile.PipeRotation;
 import sk.stuba.fei.uim.oop.tile.Tile;
 import sk.stuba.fei.uim.oop.tile.TileType;
 
@@ -88,7 +89,6 @@ public class GameLogic extends UniversalAdapter {
                     ((Tile) component).setHighlighted(0);
                 }
             }
-            return;
         } else {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
@@ -100,7 +100,7 @@ public class GameLogic extends UniversalAdapter {
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mouseClicked(MouseEvent e) {
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (current instanceof Tile) {
             Tile tile = (Tile) current;
@@ -121,7 +121,7 @@ public class GameLogic extends UniversalAdapter {
         }
     }
 
-    public void checkForWin() {
+    private void checkForWin() {
         Set<Point> visited = new HashSet<>();
         Point firstPipe = currentBoard.getPipes().get(0);
         checkForWinRec(firstPipe, visited);
@@ -152,52 +152,81 @@ public class GameLogic extends UniversalAdapter {
             }
         }
         return solved;
-
     }
 
     private boolean isCorrectlyRotated(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
         int prevRotation = prevTile.getRotation();
         int currentRotation = currentTile.getRotation();
-
         if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
             if (prevPoint.x == currentPoint.x) {
-                return (prevRotation == 0 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 2);
+                return (prevRotation == PipeRotation.HORIZONTAL.getRotation()) &&
+                        (currentRotation == PipeRotation.HORIZONTAL.getRotation());
             } else if (prevPoint.y == currentPoint.y) {
-                return (prevRotation == 1 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 3);
+                return (prevRotation == PipeRotation.VERTICAL.getRotation()) &&
+                        (currentRotation == PipeRotation.VERTICAL.getRotation());
             }
         } else if (prevTile.getType() == TileType.KNEE_PIPE && currentTile.getType() == TileType.STRAIGHT_PIPE) {
             if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (prevRotation == 1 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 2);
+                return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
             } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (prevRotation == 0 || prevRotation == 3) && (currentRotation == 0 || currentRotation == 2);
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.HORIZONTAL.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (prevRotation == 2 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 3);
+                return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (prevRotation == 0 || prevRotation == 1) && (currentRotation == 1 || currentRotation == 3);
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_UP.getRotation())
+                        && (currentRotation == PipeRotation.VERTICAL.getRotation());
             }
         } else if (prevTile.getType() == TileType.STRAIGHT_PIPE && currentTile.getType() == TileType.KNEE_PIPE) {
             if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (currentRotation == 1 || currentRotation == 2) && (prevRotation == 0 || prevRotation == 2);
+                return (prevRotation == PipeRotation.HORIZONTAL.getRotation())
+                        && (currentRotation == PipeRotation.RIGHT_UP.getRotation()
+                        || currentRotation == PipeRotation.RIGHT_DOWN.getRotation());
             } else if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (currentRotation == 0 || currentRotation == 3) && (prevRotation == 0 || prevRotation == 2);
+                return (prevRotation == PipeRotation.HORIZONTAL.getRotation())
+                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (currentRotation == 2 || currentRotation == 3) && (prevRotation == 1 || prevRotation == 3);
+                return (prevRotation == PipeRotation.VERTICAL.getRotation())
+                        && (currentRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (currentRotation == 0 || currentRotation == 1) && (prevRotation == 1 || prevRotation == 3);
+                return (prevRotation == PipeRotation.VERTICAL.getRotation())
+                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                        || currentRotation == PipeRotation.RIGHT_UP.getRotation());
             }
         } else {
             if (prevPoint.x == currentPoint.x && prevPoint.y < currentPoint.y) {
-                return (prevRotation == 1 || prevRotation == 2) && (currentRotation == 0 || currentRotation == 3);
+                return (prevRotation == PipeRotation.RIGHT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
             } else if (prevPoint.x == currentPoint.x && prevPoint.y > currentPoint.y) {
-                return (prevRotation == 0 || prevRotation == 3) && (currentRotation == 1 || currentRotation == 2);
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.RIGHT_UP.getRotation()
+                        || currentRotation == PipeRotation.RIGHT_DOWN.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x < currentPoint.x) {
-                return (prevRotation == 2 || prevRotation == 3) && (currentRotation == 0 || currentRotation == 1);
+                return (prevRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                        || prevRotation == PipeRotation.LEFT_DOWN.getRotation())
+                        && (currentRotation == PipeRotation.LEFT_UP.getRotation()
+                        || currentRotation == PipeRotation.RIGHT_UP.getRotation());
             } else if (prevPoint.y == currentPoint.y && prevPoint.x > currentPoint.x) {
-                return (prevRotation == 0 || prevRotation == 1) && (currentRotation == 2 || currentRotation == 3);
+                return (prevRotation == PipeRotation.LEFT_UP.getRotation()
+                        || prevRotation == PipeRotation.RIGHT_UP.getRotation())
+                        && (currentRotation == PipeRotation.RIGHT_DOWN.getRotation()
+                        || currentRotation == PipeRotation.LEFT_DOWN.getRotation());
             }
         }
         return false;
     }
+
     private void addLevel() {
         this.setLevel(this.getLevel() + 1);
         this.updateLevelLabel();
