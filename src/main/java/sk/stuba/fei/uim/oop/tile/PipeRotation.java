@@ -14,7 +14,7 @@ public enum PipeRotation {
 
     private final int rotation;
 
-    PipeRotation(int rotation) {
+     PipeRotation(int rotation) {
         this.rotation = rotation;
     }
 
