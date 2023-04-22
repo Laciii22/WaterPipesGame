@@ -103,18 +103,9 @@ public class GameLogic extends UniversalAdapter {
         }
     }
 
-    private void setDefaultHighlighting() {
-        for (Component component : currentBoard.getComponents()) {
-            if (component instanceof Tile) {
-                Tile tile = (Tile) component;
-                tile.setHighlighted(0);
-            }
-        }
-    }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        this.setDefaultHighlighting();
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (current instanceof Tile) {
             Tile tile = (Tile) current;
