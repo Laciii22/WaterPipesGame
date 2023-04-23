@@ -18,7 +18,7 @@ public class Board extends JPanel {
     public Board(int dimension) {
         random = new Random();
         this.initializeBoard(dimension);
-        setPreferredSize(new Dimension());
+        setPreferredSize(new Dimension(500, 500));
         setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
     }
 
