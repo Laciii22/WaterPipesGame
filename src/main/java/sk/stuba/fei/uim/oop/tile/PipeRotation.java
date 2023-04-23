@@ -1,9 +1,5 @@
 package sk.stuba.fei.uim.oop.tile;
 
-
-import lombok.Getter;
-
-@Getter
 public enum PipeRotation {
     LEFT_UP(0) ,
     RIGHT_UP(1) ,

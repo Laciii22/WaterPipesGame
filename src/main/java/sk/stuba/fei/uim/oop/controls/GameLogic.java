@@ -90,22 +90,22 @@ public class GameLogic extends UniversalAdapter {
         if (!(current instanceof Tile)) {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
-                    ((Tile) component).setHighlighted(0);
+                    ((Tile) component).setHover(false);
                 }
             }
         } else {
             for (Component component : currentBoard.getComponents()) {
                 if (component instanceof Tile) {
                     Tile tile = (Tile) component;
-                    tile.setHighlighted(component == current ? 2 : 0);
+                    tile.setHover(component == current);
                 }
             }
         }
     }
 
-
     @Override
     public void mousePressed(MouseEvent e) {
+        this.setDefaultColor();
         Component current = currentBoard.findComponentAt(e.getX(), e.getY());
         if (current instanceof Tile) {
             Tile tile = (Tile) current;
@@ -132,7 +132,7 @@ public class GameLogic extends UniversalAdapter {
         checkForWinRec(firstPipe, visited);
         Point lastPipe = currentBoard.getPipes().get(currentBoard.getPipes().size() - 1);
         Tile lastPipeTile = currentBoard.getTiles()[lastPipe.x][lastPipe.y];
-        if (lastPipeTile.getHighlighted() == 1) {
+        if (lastPipeTile.isHighlighted()) {
             gameRestart();
             addLevel();
         }
@@ -142,7 +142,7 @@ public class GameLogic extends UniversalAdapter {
     private boolean checkForWinRec(Point current, Set<Point> visited) {
         visited.add(current);
         Tile currentTile = currentBoard.getTiles()[current.x][current.y];
-        currentTile.setHighlighted(1);
+        currentTile.setHighlighted(true);
         if (current == currentBoard.getPipes().get(currentBoard.getPipes().size() - 1)) {
             return true;
         }
@@ -183,7 +183,6 @@ public class GameLogic extends UniversalAdapter {
         }
         return false;
     }
-
 
     private boolean kneeStraightPipeConnection(Tile prevTile, Tile currentTile, Point prevPoint, Point currentPoint) {
         int prevRotation = prevTile.getRotation();
@@ -235,6 +234,13 @@ public class GameLogic extends UniversalAdapter {
         return false;
     }
 
+    private void setDefaultColor() {
+        for (int i = 0; i < currentBoard.getTiles().length; i++) {
+            for (int j = 0; j < currentBoard.getTiles()[i].length; j++) {
+                currentBoard.getTiles()[i][j].setHighlighted(false);
+            }
+        }
+    }
 
     private void addLevel() {
         this.setLevel(this.getLevel() + 1);

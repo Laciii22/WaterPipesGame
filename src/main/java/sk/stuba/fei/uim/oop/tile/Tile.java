@@ -12,7 +12,8 @@ public class Tile extends JPanel {
     private TileType type;
     private int rotation;
     private Random random;
-    private int highlighted = 0;
+    private boolean hover = false;
+    private boolean highlighted = false;
     private boolean clickable = true;
 
 
@@ -37,16 +38,11 @@ public class Tile extends JPanel {
         Graphics2D g2d = (Graphics2D) g.create();
         AffineTransform old = g2d.getTransform();
         g2d.rotate(Math.toRadians(90 * getRotation()), getWidth() / 2.0, getHeight() / 2.0);
-        switch (highlighted) {
-            case 1:
-                color = Color.BLUE;
-                break;
-            case 2:
-                this.setBackground(Color.YELLOW);
-                break;
-            default:
-                this.setBackground(null);
-                break;
+        if (hover) {
+            this.setBackground(Color.YELLOW);
+        }
+        if (highlighted) {
+            color = Color.BLUE;
         }
         if (type.equals(TileType.EMPTY)) {
             this.setClickable(false);
