@@ -240,6 +240,7 @@ public class GameLogic extends UniversalAdapter {
                 currentBoard.getTiles()[i][j].setHighlighted(false);
             }
         }
+        currentBoard.repaint();
     }
 
     private void addLevel() {
